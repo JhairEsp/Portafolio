@@ -1,91 +1,131 @@
-
-import { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, Stars, PerspectiveCamera } from '@react-three/drei';
+import { Float, OrbitControls, Stars } from '@react-three/drei';
+import { useRef } from 'react';
 import * as THREE from 'three';
 
-function NeonCubes() {
-  const groupRef = useRef<THREE.Group>(null);
-  
-  // Generamos cubos con colores vibrantes y posiciones garantizadas
-  const cubes = useMemo(() => {
-    const colors = ["#8B5CF6", "#22C55E", "#FACC15"]; // Morado, Verde, Amarillo
-    return Array.from({ length: 25 }).map((_, i) => ({
-      position: [
-        (Math.random() - 0.5) * 25, // X
-        (Math.random() - 0.5) * 25, // Y
-        (Math.random() - 0.5) * 10 - 5 // Z (Aseguramos que estén frente o cerca)
-      ] as [number, number, number],
-      color: colors[i % colors.length],
-      scale: Math.random() * 0.8 + 0.4,
-      rotationSpeed: Math.random() * 0.02
-    }));
-  }, []);
+function Cube({
+  position,
+  color,
+  size
+}: {
+  position: [number, number, number];
+  color: string;
+  size: number;
+}) {
+  const meshRef = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
-    if (!groupRef.current) return;
-    
-    const scrollY = window.scrollY;
-    const time = state.clock.getElapsedTime();
+    if (!meshRef.current) return;
 
-    // Parallax con Mouse
-    const mX = state.mouse.x * 2;
-    const mY = state.mouse.y * 2;
-    
-    groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, mX, 0.05);
-    
-    // El scroll mueve los cubos verticalmente
-    groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, mY + (scrollY * 0.008), 0.05);
+    // Rotación suave
+    meshRef.current.rotation.x += 0.002;
+    meshRef.current.rotation.y += 0.003;
 
-    // Rotación de los cubos individuales
-    groupRef.current.children.forEach((child, i) => {
-      child.rotation.x += 0.01;
-      child.rotation.y += 0.01;
-    });
+    // Movimiento flotante
+    meshRef.current.position.y =
+      position[1] + Math.sin(state.clock.elapsedTime * 1.5) * 0.25;
+
+    // Movimiento lateral leve
+    meshRef.current.position.x =
+      position[0] + Math.cos(state.clock.elapsedTime * 0.5) * 0.1;
   });
 
   return (
-    <group ref={groupRef}>
-      {cubes.map((cube, i) => (
-        <Float key={i} speed={2} rotationIntensity={1} floatIntensity={1}>
-          <mesh position={cube.position} scale={cube.scale}>
-            <boxGeometry args={[1, 1, 1]} />
-            <meshStandardMaterial 
-              color={cube.color}
-              emissive={cube.color}
-              emissiveIntensity={2}
-              roughness={0.1}
-              metalness={0.8}
-            />
-          </mesh>
-        </Float>
-      ))}
-    </group>
+    <Float
+      speed={2}
+      rotationIntensity={1.5}
+      floatIntensity={2}
+    >
+      <mesh ref={meshRef} position={position}>
+        <boxGeometry args={[size, size, size]} />
+
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={1}
+          metalness={1}
+          roughness={0.1}
+        />
+      </mesh>
+    </Float>
   );
 }
 
 export default function Scene() {
   return (
-    <div className="fixed inset-0 -z-10 bg-[#020202]">
-      {/* Gradiente sutil de fondo para que no sea negro plano */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 via-transparent to-secondary/10 opacity-30 pointer-events-none" />
+    <div className="fixed inset-0 -z-10 overflow-hidden bg-black">
       
-      <Canvas dpr={[1, 2]}>
-        <PerspectiveCamera makeDefault position={[0, 0, 12]} />
-        
-        {/* Iluminación potente */}
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={2} color="#8B5CF6" />
-        <pointLight position={[-10, -10, 10]} intensity={2} color="#22C55E" />
-        <spotLight position={[0, 20, 10]} angle={0.15} penumbra={1} intensity={2} />
+      {/* Fondo gradiente */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#050505] via-[#0a0a0a] to-[#111827]" />
 
-        <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-        
-        <NeonCubes />
-        
-        {/* Niebla corregida para no tapar los objetos cercanos */}
-        <fog attach="fog" args={['#020202', 5, 35]} />
+      {/* Glow morado */}
+      <div className="absolute top-[-200px] left-[-200px] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-3xl animate-pulse" />
+
+      {/* Glow verde */}
+      <div className="absolute bottom-[-200px] right-[-200px] w-[500px] h-[500px] bg-green-500/20 rounded-full blur-3xl animate-pulse" />
+
+      <Canvas
+        camera={{ position: [0, 0, 8], fov: 75 }}
+        dpr={[1, 2]}
+      >
+        {/* Niebla futurista */}
+        <fog attach="fog" args={['#050505', 8, 20]} />
+
+        {/* Luces */}
+        <ambientLight intensity={1.2} />
+
+        <directionalLight
+          position={[5, 5, 5]}
+          intensity={3}
+          color="#8B5CF6"
+        />
+
+        <pointLight
+          position={[-5, -5, -5]}
+          intensity={3}
+          color="#22C55E"
+        />
+
+        <pointLight
+          position={[0, 5, 5]}
+          intensity={2}
+          color="#FACC15"
+        />
+
+        {/* Estrellas */}
+        <Stars
+          radius={80}
+          depth={50}
+          count={4000}
+          factor={4}
+          saturation={0}
+          fade
+          speed={1}
+        />
+
+        {/* Cubos */}
+        <Cube position={[-3, 2, -2]} color="#8B5CF6" size={1.2} />
+        <Cube position={[2, -1, -3]} color="#22C55E" size={1} />
+        <Cube position={[4, 2, -5]} color="#FACC15" size={1.5} />
+        <Cube position={[-4, -2, -4]} color="#06B6D4" size={1.3} />
+        <Cube position={[0, 0, -2]} color="#EC4899" size={1.1} />
+        <Cube position={[1, 3, -6]} color="#3B82F6" size={1.4} />
+        <Cube position={[-2, -3, -5]} color="#F43F5E" size={1.2} />
+
+        {/* Cámara */}
+        <OrbitControls
+          enableZoom={false}
+          enablePan={false}
+          autoRotate
+          autoRotateSpeed={0.4}
+        />
       </Canvas>
+
+      {/* Overlay Matrix */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/60 pointer-events-none" />
+
+      {/* Glow central */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(139,92,246,0.15),transparent_60%)] pointer-events-none" />
     </div>
   );
 }
