@@ -90,8 +90,8 @@ function CodeColumns() {
           position={[col.x, 0, col.z]}
           fontSize={isMobile ? 0.4 : 0.6} // Más pequeño en móvil
           color={i % 2 === 0 ? "#22C55E" : "#8B5CF6"} 
-          fillOpacity={isMobile ? 0.25 : 0.4} // Más sutil en móvil
-          anchorX="center"
+          fillOpacity={isMobile ? 0.5 : 0.8} // Más sutil en móvil
+          anchorX="center"  
           anchorY="middle"
         >
           {col.content}
@@ -104,8 +104,13 @@ function CodeColumns() {
 export default function Scene() {
   return (
     <div className="fixed inset-0 -z-10 bg-[#050505]">
-      <Canvas camera={{ position: [0, 0, 12], fov: 60 }}>
-        <ambientLight intensity={1} />
+      <Canvas
+        camera={{ position: [0, 0, 12], fov: 60 }}
+        dpr={[1, 2]}
+        gl={{ antialias: true }}
+      >
+      <color attach="background" args={['#050505']} />
+      <ambientLight intensity={1} />
         
         <FloatingCode />
         <CodeColumns />
@@ -114,7 +119,7 @@ export default function Scene() {
       </Canvas>
       
       {/* Overlay para dar profundidad */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#050505] via-transparent to-[#050505] opacity-60 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/30 via-transparent to-[#050505]/30 pointer-events-none" />
     </div>
   );
 }
