@@ -10,14 +10,14 @@ function NeonCubes() {
   // Generamos cubos con colores vibrantes y posiciones garantizadas
   const cubes = useMemo(() => {
     const colors = ["#8B5CF6", "#22C55E", "#FACC15"]; // Morado, Verde, Amarillo
-    return Array.from({ length: 25 }).map((_, i) => ({
+    return Array.from({ length: 30 }).map((_, i) => ({
       position: [
-        (Math.random() - 0.5) * 25, // X
-        (Math.random() - 0.5) * 25, // Y
-        (Math.random() - 0.5) * 10 - 5 // Z (Aseguramos que estén frente o cerca)
+        (Math.random() - 0.5) * 15, // X (más cercano a la cámara)
+        (Math.random() - 0.5) * 15, // Y (más cercano a la cámara)
+        (Math.random() * 15) - 8 // Z (frente a la cámara, rango -8 a 7)
       ] as [number, number, number],
       color: colors[i % colors.length],
-      scale: Math.random() * 0.8 + 0.4,
+      scale: Math.random() * 0.6 + 0.5,
       rotationSpeed: Math.random() * 0.02
     }));
   }, []);
@@ -74,17 +74,18 @@ export default function Scene() {
         <PerspectiveCamera makeDefault position={[0, 0, 12]} />
         
         {/* Iluminación potente */}
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={2} color="#8B5CF6" />
-        <pointLight position={[-10, -10, 10]} intensity={2} color="#22C55E" />
-        <spotLight position={[0, 20, 10]} angle={0.15} penumbra={1} intensity={2} />
+        <ambientLight intensity={0.8} />
+        <pointLight position={[10, 10, 10]} intensity={2.5} color="#8B5CF6" />
+        <pointLight position={[-10, -10, 10]} intensity={2.5} color="#22C55E" />
+        <pointLight position={[0, 0, 15]} intensity={2} color="#FACC15" />
+        <spotLight position={[0, 20, 10]} angle={0.15} penumbra={1} intensity={2.5} />
 
         <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
         
         <NeonCubes />
         
-        {/* Niebla corregida para no tapar los objetos cercanos */}
-        <fog attach="fog" args={['#020202', 5, 35]} />
+        {/* Niebla mejorada - comienza más lejos para no tapar los cubos */}
+        <fog attach="fog" args={['#020202', 15, 50]} />
       </Canvas>
     </div>
   );
