@@ -1,101 +1,64 @@
 
 import { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Text, Float } from '@react-three/drei';
+import { Float, Stars, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 
-const CODE_SNIPPETS = [
-  'const dev = "Jhair";',
-  'system.analyze();',
-  'git push origin main',
-  'npm run build',
-  'SELECT * FROM data;',
-  'await solve(problem);',
-  'while(learning) { ... }',
-  'export default App;',
-  'function optimize() {}',
-  'if (innovating) { ... }',
-];
-
-function FloatingCode() {
-  const count = 30; // Reduced count for stability
-  const snippets = useMemo(() => {
-    return Array.from({ length: count }).map(() => ({
-      text: CODE_SNIPPETS[Math.floor(Math.random() * CODE_SNIPPETS.length)],
-      position: [
-        (Math.random() - 0.5) * 40,
-        (Math.random() - 0.5) * 25,
-        (Math.random() - 0.5) * 15,
-      ] as [number, number, number],
-      color: ['#8B5CF6', '#22C55E', '#FACC15', '#FFFFFF'][Math.floor(Math.random() * 4)],
-      scale: Math.random() * 0.8 + 0.4
-    }));
-  }, []);
-
-  return (
-    <group>
-      {snippets.map((s, i) => (
-        <Float key={i} speed={1} rotationIntensity={0.2} floatIntensity={0.5}>
-          <Text
-            position={s.position}
-            fontSize={s.scale}
-            color={s.color}
-            fillOpacity={0.6}
-            anchorX="center"
-            anchorY="middle"
-          >
-            {s.text}
-          </Text>
-        </Float>
-      ))}
-    </group>
-  );
-}
-
-function CodeColumns() {
-  const columns = 40;
+function NeonCubes() {
   const groupRef = useRef<THREE.Group>(null);
-  const chars = "01<>/{}[]();:+-*/$";
-
-  // Generamos datos iniciales para las columnas
-  const columnData = useMemo(() => {
-    return Array.from({ length: columns }).map((_, i) => ({
-      x: (i - columns / 2) * 1.5, // Espaciado uniforme
-      z: Math.random() * 10 - 15, // Un poco atrás de la cámara
-      speed: Math.random() * 4 + 2, // Velocidad de caída
-      offset: Math.random() * 40, // Desfase inicial
-      content: Array.from({ length: 20 }).map(() => chars[Math.floor(Math.random() * chars.length)]).join('\n')
+  
+  // Generamos cubos con colores vibrantes y posiciones garantizadas
+  const cubes = useMemo(() => {
+    const colors = ["#8B5CF6", "#22C55E", "#FACC15"]; // Morado, Verde, Amarillo
+    return Array.from({ length: 25 }).map((_, i) => ({
+      position: [
+        (Math.random() - 0.5) * 25, // X
+        (Math.random() - 0.5) * 25, // Y
+        (Math.random() - 0.5) * 10 - 5 // Z (Aseguramos que estén frente o cerca)
+      ] as [number, number, number],
+      color: colors[i % colors.length],
+      scale: Math.random() * 0.8 + 0.4,
+      rotationSpeed: Math.random() * 0.02
     }));
   }, []);
 
   useFrame((state) => {
+    if (!groupRef.current) return;
+    
+    const scrollY = window.scrollY;
     const time = state.clock.getElapsedTime();
-    if (groupRef.current) {
-      groupRef.current.children.forEach((child, i) => {
-        const data = columnData[i];
-        // Lógica de caída vertical: (Posición inicial - (tiempo * velocidad)) modulo rango
-        const yPos = 20 - ((time * data.speed + data.offset) % 40);
-        child.position.y = yPos;
-      });
-    }
-  });
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    // Parallax con Mouse
+    const mX = state.mouse.x * 2;
+    const mY = state.mouse.y * 2;
+    
+    groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, mX, 0.05);
+    
+    // El scroll mueve los cubos verticalmente
+    groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, mY + (scrollY * 0.008), 0.05);
+
+    // Rotación de los cubos individuales
+    groupRef.current.children.forEach((child, i) => {
+      child.rotation.x += 0.01;
+      child.rotation.y += 0.01;
+    });
+  });
 
   return (
     <group ref={groupRef}>
-      {columnData.map((col, i) => (
-        <Text
-          key={i}
-          position={[col.x, 0, col.z]}
-          fontSize={isMobile ? 0.4 : 0.6} // Más pequeño en móvil
-          color={i % 2 === 0 ? "#22C55E" : "#8B5CF6"} 
-          fillOpacity={isMobile ? 0.5 : 0.8} // Más sutil en móvil
-          anchorX="center"  
-          anchorY="middle"
-        >
-          {col.content}
-        </Text>
+      {cubes.map((cube, i) => (
+        <Float key={i} speed={2} rotationIntensity={1} floatIntensity={1}>
+          <mesh position={cube.position} scale={cube.scale}>
+            <boxGeometry args={[1, 1, 1]} />
+            <meshStandardMaterial 
+              color={cube.color}
+              emissive={cube.color}
+              emissiveIntensity={2}
+              roughness={0.1}
+              metalness={0.8}
+            />
+          </mesh>
+        </Float>
       ))}
     </group>
   );
@@ -103,23 +66,26 @@ function CodeColumns() {
 
 export default function Scene() {
   return (
-    <div className="fixed inset-0 -z-10 bg-[#050505]">
-      <Canvas
-        camera={{ position: [0, 0, 12], fov: 60 }}
-        dpr={[1, 2]}
-        gl={{ antialias: true }}
-      >
-      <color attach="background" args={['#050505']} />
-      <ambientLight intensity={1} />
-        
-        <FloatingCode />
-        <CodeColumns />
-        
-        <fog attach="fog" args={['#050505', 5, 25]} />
-      </Canvas>
+    <div className="fixed inset-0 -z-10 bg-[#020202]">
+      {/* Gradiente sutil de fondo para que no sea negro plano */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 via-transparent to-secondary/10 opacity-30 pointer-events-none" />
       
-      {/* Overlay para dar profundidad */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/30 via-transparent to-[#050505]/30 pointer-events-none" />
+      <Canvas dpr={[1, 2]}>
+        <PerspectiveCamera makeDefault position={[0, 0, 12]} />
+        
+        {/* Iluminación potente */}
+        <ambientLight intensity={0.5} />
+        <pointLight position={[10, 10, 10]} intensity={2} color="#8B5CF6" />
+        <pointLight position={[-10, -10, 10]} intensity={2} color="#22C55E" />
+        <spotLight position={[0, 20, 10]} angle={0.15} penumbra={1} intensity={2} />
+
+        <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+        
+        <NeonCubes />
+        
+        {/* Niebla corregida para no tapar los objetos cercanos */}
+        <fog attach="fog" args={['#020202', 5, 35]} />
+      </Canvas>
     </div>
   );
 }

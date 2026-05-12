@@ -83,7 +83,7 @@ export default function Hero() {
             
             <div className="w-full h-full rounded-[2rem] md:rounded-3xl overflow-hidden relative z-10 border-2 md:border-4 border-white shadow-[0_0_40px_rgba(139,92,246,0.3)] bg-surface">
               <img 
-                src="Jhair.png" 
+                src="https://preferred-violet-xaxascwdkg.edgeone.app/imagen_2026-05-10_004057981.png" 
                 alt="Jhair Espinoza" 
                 className="w-full h-full object-cover transition-all duration-700 ease-out hover:scale-105"
               />
